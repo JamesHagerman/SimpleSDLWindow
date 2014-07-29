@@ -5,7 +5,7 @@ SDL_Event event;
 
 int main(int argc, char* argv[]) {
 	SDL_Init(SDL_INIT_VIDEO);
-	screen = SDL_SetVideoMode(640, 480, 16, SDL_SWSURFACE);
+	screen = SDL_SetVideoMode(640, 480, 16, SDL_HWSURFACE);
 	SDL_WM_SetCaption("Simple Window", "Simple Window");
 
 	bool done = false;

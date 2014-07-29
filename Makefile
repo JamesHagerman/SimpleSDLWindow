@@ -1,7 +1,7 @@
 CXX = g++
 CFLAGS=-c -Wall -g
 IFLAGS = -I/usr/include/SDL -D_GNU_SOURCE=1 -D_REENTRANT
-LDFLAGS = -L/usr/lib/x86_64-linux-gnu -lSDL
+LDFLAGS = `sdl-config  --libs`
 OUTPUT = sdl_window
 
 all: ${OUTPUT}
