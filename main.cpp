@@ -9,7 +9,7 @@ using namespace std;
 
 int main(int argc, char* argv[]) {
 	SDL_Init(SDL_INIT_VIDEO);
-	screen = SDL_SetVideoMode(100, 100, 0, 0);
+	screen = SDL_SetVideoMode(0, 0, 0, 0);
 	SDL_WM_SetCaption("Simple Window", "Simple Window");
 
 	bool done = false;
@@ -34,7 +34,7 @@ int main(int argc, char* argv[]) {
 
 		}
 		if (screen != NULL) {
-			SDL_FillRect(screen, &screen->clip_rect, SDL_MapRGB(screen->format, 0, 0, 0));
+			SDL_FillRect(screen, &screen->clip_rect, SDL_MapRGB(screen->format, 255, 0, 0));
 			SDL_Flip(screen);
 		} 
 	}
