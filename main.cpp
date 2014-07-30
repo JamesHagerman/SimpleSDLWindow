@@ -12,6 +12,11 @@ int main(int argc, char* argv[]) {
 	screen = SDL_SetVideoMode(0, 0, 0, 0);
 	SDL_WM_SetCaption("Simple Window", "Simple Window");
 
+	if (!screen) {
+		cout << "Could not initialize SDL: " << SDL_GetError() << endl;
+		return 0;
+	}
+
 	bool done = false;
 	while (!done) {
 		while (SDL_PollEvent(&event)) {
