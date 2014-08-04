@@ -272,7 +272,6 @@ static void draw_screen( void )
 
 static void setup_opengl( int width, int height )
 {
-	float ratio = (float) width / (float) height;
 
 	/* Our shading model--Gouraud (smooth). */
 	glShadeModel( GL_SMOOTH );
@@ -294,13 +293,20 @@ static void setup_opengl( int width, int height )
 	 */
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
+	
+	// Ratio is not used now but it will probably be used when we start using shaders to get
+	// the screen to look right:
+	// float ratio = (float) width / (float) height;
+
 	/*
-	 * EXERCISE:
-	 * Replace this with a call to glFrustum.
-	 */
+	* EXERCISE:
+	* Replace this with a call to glFrustum.
+	*/
+	// Actually, forget that. Because gluPerspective is no longer available in new versions
+	// of OpenGL
 	// gluPerspective( 60.0, ratio, 1.0, 1024.0 );
 	// gluPerspective( 120, 4.0f / 3.0f, .00001, 100);
-	gluPerspective( 120, ratio, .00001, 100);
+	// gluPerspective( 120, ratio, .00001, 100);
 	glMatrixMode(GL_MODELVIEW);
 }
 
