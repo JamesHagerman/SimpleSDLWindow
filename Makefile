@@ -1,15 +1,16 @@
 CXX = g++
 CFLAGS=-c -Wall -g `sdl-config --cflags`
-LDFLAGS = `sdl-config  --libs`
+LDFLAGS = `sdl-config  --libs` -lGL -lGLU
+LDFLAGSMAC = `sdl-config  --libs` -framework OpenGL
 OUTPUT = sdl_window
 
 all: ${OUTPUT}
 
 ${OUTPUT}: main.o
-	$(CXX) main.o $(LDFLAGS) -o ${OUTPUT}
+	$(CXX) main.o $(LDFLAGSMAC) -o ${OUTPUT}
 
 main.o: main.cpp
-	$(CXX) $(CFLAGS) $(IFLAGS) $(LDFLAGS) main.cpp
+	$(CXX) $(CFLAGS) $(IFLAGS) $(LDFLAGSMAC) main.cpp
 
 
 clean:
