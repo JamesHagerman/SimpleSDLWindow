@@ -34,24 +34,27 @@ static void quit_tutorial( int code )
 static void handle_key_down( SDL_keysym* keysym )
 {
 
-    /* 
-     * We're only interested if 'Esc' has
-     * been presssed.
-     *
-     * EXERCISE: 
-     * Handle the arrow keys and have that change the
-     * viewing position/angle.
-     */
-    switch( keysym->sym ) {
-    case SDLK_ESCAPE:
-        quit_tutorial( 0 );
-        break;
-    case SDLK_SPACE:
-        should_rotate = !should_rotate;
-        break;
-    default:
-        break;
-    }
+	cout << "Keydown!" << endl;
+
+	/* 
+	 * We're only interested if 'Esc' has
+	 * been presssed.
+	 *
+	 * EXERCISE: 
+	 * Handle the arrow keys and have that change the
+	 * viewing position/angle.
+	 */
+	switch( keysym->sym ) {
+		case SDLK_ESCAPE:
+			cout << "Quitting the app!" << endl;
+			quit_tutorial( 0 );
+			break;
+		case SDLK_SPACE:
+			should_rotate = !should_rotate;
+			break;
+		default:
+			break;
+	}
 
 }
 
@@ -63,16 +66,18 @@ static void process_events( void )
 
     /* Grab all the events off the queue. */
     while( SDL_PollEvent( &event ) ) {
-
         switch( event.type ) {
-        case SDL_KEYDOWN:
-            /* Handle key presses. */
-            handle_key_down( &event.key.keysym );
-            break;
-        case SDL_QUIT:
-            /* Handle quit requests (like Ctrl-c). */
-            quit_tutorial( 0 );
-            break;
+			case SDL_KEYDOWN:
+				/* Handle key presses. */
+				handle_key_down( &event.key.keysym );
+				break;
+			case SDL_KEYUP:
+				cout << "Keyup!" << endl;
+				break;
+			case SDL_QUIT:
+				/* Handle quit requests (like Ctrl-c). */
+				quit_tutorial( 0 );
+				break;
         }
 
     }
