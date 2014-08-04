@@ -1,17 +1,39 @@
 #include "SDL.h"
 
 #ifdef __APPLE__
-#include <OpenGL/gl.h>
-#include <OpenGL/glu.h>
+	#include <OpenGL/gl.h>
+	#include <OpenGL/glu.h>
 #else
-#include <GL/glu.h>
-#include <GL/gl.h>
+	#include <GL/glu.h>
+	#include <GL/gl.h>
+    #include <GL/glext.h>
+    #include <GL/glx.h>
+    #include <GL/glxext.h>
+    #define glXGetProcAddress(x) (*glXGetProcAddressARB)((const GLubyte*)x)
 #endif
 
 #include <iostream>
+#include <math.h>
+#include <time.h>
+#include <unistd.h>
 
 SDL_Surface *screen;
 SDL_Event event;
+
+// Set up some global variables to point to GLSL in Linux:
+#if !defined(__APPLE__) && !defined(_WIN32)
+	PFNGLCREATEPROGRAMOBJECTARBPROC     glCreateProgramObjectARB = NULL;
+	PFNGLCREATESHADEROBJECTARBPROC      glCreateShaderObjectARB = NULL;
+	PFNGLSHADERSOURCEARBPROC            glShaderSourceARB = NULL;
+	PFNGLCOMPILESHADERARBPROC           glCompileShaderARB = NULL;
+	PFNGLGETOBJECTPARAMETERIVARBPROC    glGetObjectParameterivARB = NULL;
+	PFNGLATTACHOBJECTARBPROC            glAttachObjectARB = NULL;
+	PFNGLGETINFOLOGARBPROC              glGetInfoLogARB = NULL;
+	PFNGLLINKPROGRAMARBPROC             glLinkProgramARB = NULL;
+	PFNGLUSEPROGRAMOBJECTARBPROC        glUseProgramObjectARB = NULL;
+	PFNGLGETUNIFORMLOCATIONARBPROC      glGetUniformLocationARB = NULL;
+	PFNGLUNIFORM1FARBPROC               glUniform1f = NULL;
+#endif
 
 using namespace std;
 
@@ -86,197 +108,200 @@ static void process_events( void )
 
 static void draw_screen( void )
 {
-    /* Our angle of rotation. */
-    static float angle = 0.0f;
+	/* Our angle of rotation. */
+	static float angle = 0.0f;
 
-    /*
-     * EXERCISE:
-     * Replace this awful mess with vertex
-     * arrays and a call to glDrawElements.
-     *
-     * EXERCISE:
-     * After completing the above, change
-     * it to use compiled vertex arrays.
-     *
-     * EXERCISE:
-     * Verify my windings are correct here ;).
-     */
-    static GLfloat v0[] = { -1.0f, -1.0f,  1.0f };
-    static GLfloat v1[] = {  1.0f, -1.0f,  1.0f };
-    static GLfloat v2[] = {  1.0f,  1.0f,  1.0f };
-    static GLfloat v3[] = { -1.0f,  1.0f,  1.0f };
-    static GLfloat v4[] = { -1.0f, -1.0f, -1.0f };
-    static GLfloat v5[] = {  1.0f, -1.0f, -1.0f };
-    static GLfloat v6[] = {  1.0f,  1.0f, -1.0f };
-    static GLfloat v7[] = { -1.0f,  1.0f, -1.0f };
-    static GLubyte red[]    = { 255,   0,   0, 255 };
-    static GLubyte green[]  = {   0, 255,   0, 255 };
-    static GLubyte blue[]   = {   0,   0, 255, 255 };
-    static GLubyte white[]  = { 255, 255, 255, 255 };
-    static GLubyte yellow[] = {   0, 255, 255, 255 };
-    static GLubyte black[]  = {   0,   0,   0, 255 };
-    static GLubyte orange[] = { 255, 255,   0, 255 };
-    static GLubyte purple[] = { 255,   0, 255,   0 };
+	/*
+	 * EXERCISE:
+	 * Replace this awful mess with vertex
+	 * arrays and a call to glDrawElements.
+	 *
+	 * EXERCISE:
+	 * After completing the above, change
+	 * it to use compiled vertex arrays.
+	 *
+	 * EXERCISE:
+	 * Verify my windings are correct here ;).
+	 */
+	static GLfloat v0[] = { -1.0f, -1.0f,  1.0f };
+	static GLfloat v1[] = {  1.0f, -1.0f,  1.0f };
+	static GLfloat v2[] = {  1.0f,  1.0f,  1.0f };
+	static GLfloat v3[] = { -1.0f,  1.0f,  1.0f };
+	static GLfloat v4[] = { -1.0f, -1.0f, -1.0f };
+	static GLfloat v5[] = {  1.0f, -1.0f, -1.0f };
+	static GLfloat v6[] = {  1.0f,  1.0f, -1.0f };
+	static GLfloat v7[] = { -1.0f,  1.0f, -1.0f };
+	static GLubyte red[]    = { 255,   0,   0, 255 };
+	static GLubyte green[]  = {   0, 255,   0, 255 };
+	static GLubyte blue[]   = {   0,   0, 255, 255 };
+	static GLubyte white[]  = { 255, 255, 255, 255 };
+	static GLubyte yellow[] = {   0, 255, 255, 255 };
+	static GLubyte black[]  = {   0,   0,   0, 255 };
+	static GLubyte orange[] = { 255, 255,   0, 255 };
+	static GLubyte purple[] = { 255,   0, 255,   0 };
 
-    /* Clear the color and depth buffers. */
-    glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
+	/* Clear the color and depth buffers. */
+	glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
 
-    /* We don't want to modify the projection matrix. */
-    glMatrixMode( GL_MODELVIEW );
-    glLoadIdentity( );
+	/* We don't want to modify the projection matrix. */
+	glMatrixMode( GL_MODELVIEW );
+	glLoadIdentity( );
 
-    /* Move down the z-axis. */
-    glTranslatef( 0.0, 0.0, -5.0 );
+	/* Move down the z-axis. */
+	glTranslatef( 0.0, 0.0, -5.0 );
 
-    /* Rotate. */
-    glRotatef( angle, 0.0, 1.0, 0.0 );
+	/* Rotate. */
+	glRotatef( angle, 0.0, 1.0, 0.0 );
 
-    if( should_rotate ) {
+	if( should_rotate ) {
 
-        if( ++angle > 360.0f ) {
-            angle = 0.0f;
-        }
+		if( ++angle > 360.0f ) {
+			angle = 0.0f;
+		}
 
-    }
+	}
 
-    /* Send our triangle data to the pipeline. */
-    glBegin( GL_TRIANGLES );
+	/* Send our triangle data to the pipeline. */
+	glBegin( GL_TRIANGLES );
 
-    glColor4ubv( red );
-    glVertex3fv( v0 );
-    glColor4ubv( green );
-    glVertex3fv( v1 );
-    glColor4ubv( blue );
-    glVertex3fv( v2 );
+	glColor4ubv( red );
+	glVertex3fv( v0 );
+	glColor4ubv( green );
+	glVertex3fv( v1 );
+	glColor4ubv( blue );
+	glVertex3fv( v2 );
 
-    glColor4ubv( red );
-    glVertex3fv( v0 );
-    glColor4ubv( blue );
-    glVertex3fv( v2 );
-    glColor4ubv( white );
-    glVertex3fv( v3 );
+	glColor4ubv( red );
+	glVertex3fv( v0 );
+	glColor4ubv( blue );
+	glVertex3fv( v2 );
+	glColor4ubv( white );
+	glVertex3fv( v3 );
 
-    glColor4ubv( green );
-    glVertex3fv( v1 );
-    glColor4ubv( black );
-    glVertex3fv( v5 );
-    glColor4ubv( orange );
-    glVertex3fv( v6 );
+	glColor4ubv( green );
+	glVertex3fv( v1 );
+	glColor4ubv( black );
+	glVertex3fv( v5 );
+	glColor4ubv( orange );
+	glVertex3fv( v6 );
 
-    glColor4ubv( green );
-    glVertex3fv( v1 );
-    glColor4ubv( orange );
-    glVertex3fv( v6 );
-    glColor4ubv( blue );
-    glVertex3fv( v2 );
+	glColor4ubv( green );
+	glVertex3fv( v1 );
+	glColor4ubv( orange );
+	glVertex3fv( v6 );
+	glColor4ubv( blue );
+	glVertex3fv( v2 );
 
-    glColor4ubv( black );
-    glVertex3fv( v5 );
-    glColor4ubv( yellow );
-    glVertex3fv( v4 );
-    glColor4ubv( purple );
-    glVertex3fv( v7 );
+	glColor4ubv( black );
+	glVertex3fv( v5 );
+	glColor4ubv( yellow );
+	glVertex3fv( v4 );
+	glColor4ubv( purple );
+	glVertex3fv( v7 );
 
-    glColor4ubv( black );
-    glVertex3fv( v5 );
-    glColor4ubv( purple );
-    glVertex3fv( v7 );
-    glColor4ubv( orange );
-    glVertex3fv( v6 );
+	glColor4ubv( black );
+	glVertex3fv( v5 );
+	glColor4ubv( purple );
+	glVertex3fv( v7 );
+	glColor4ubv( orange );
+	glVertex3fv( v6 );
 
-    glColor4ubv( yellow );
-    glVertex3fv( v4 );
-    glColor4ubv( red );
-    glVertex3fv( v0 );
-    glColor4ubv( white );
-    glVertex3fv( v3 );
+	glColor4ubv( yellow );
+	glVertex3fv( v4 );
+	glColor4ubv( red );
+	glVertex3fv( v0 );
+	glColor4ubv( white );
+	glVertex3fv( v3 );
 
-    glColor4ubv( yellow );
-    glVertex3fv( v4 );
-    glColor4ubv( white );
-    glVertex3fv( v3 );
-    glColor4ubv( purple );
-    glVertex3fv( v7 );
+	glColor4ubv( yellow );
+	glVertex3fv( v4 );
+	glColor4ubv( white );
+	glVertex3fv( v3 );
+	glColor4ubv( purple );
+	glVertex3fv( v7 );
 
-    glColor4ubv( white );
-    glVertex3fv( v3 );
-    glColor4ubv( blue );
-    glVertex3fv( v2 );
-    glColor4ubv( orange );
-    glVertex3fv( v6 );
+	glColor4ubv( white );
+	glVertex3fv( v3 );
+	glColor4ubv( blue );
+	glVertex3fv( v2 );
+	glColor4ubv( orange );
+	glVertex3fv( v6 );
 
-    glColor4ubv( white );
-    glVertex3fv( v3 );
-    glColor4ubv( orange );
-    glVertex3fv( v6 );
-    glColor4ubv( purple );
-    glVertex3fv( v7 );
+	glColor4ubv( white );
+	glVertex3fv( v3 );
+	glColor4ubv( orange );
+	glVertex3fv( v6 );
+	glColor4ubv( purple );
+	glVertex3fv( v7 );
 
-    glColor4ubv( green );
-    glVertex3fv( v1 );
-    glColor4ubv( red );
-    glVertex3fv( v0 );
-    glColor4ubv( yellow );
-    glVertex3fv( v4 );
+	glColor4ubv( green );
+	glVertex3fv( v1 );
+	glColor4ubv( red );
+	glVertex3fv( v0 );
+	glColor4ubv( yellow );
+	glVertex3fv( v4 );
 
-    glColor4ubv( green );
-    glVertex3fv( v1 );
-    glColor4ubv( yellow );
-    glVertex3fv( v4 );
-    glColor4ubv( black );
-    glVertex3fv( v5 );
+	glColor4ubv( green );
+	glVertex3fv( v1 );
+	glColor4ubv( yellow );
+	glVertex3fv( v4 );
+	glColor4ubv( black );
+	glVertex3fv( v5 );
 
-    glEnd( );
+	glEnd( );
 
-    /*
-     * EXERCISE:
-     * Draw text telling the user that 'Spc'
-     * pauses the rotation and 'Esc' quits.
-     * Do it using vetors and textured quads.
-     */
+	/*
+	 * EXERCISE:
+	 * Draw text telling the user that 'Spc'
+	 * pauses the rotation and 'Esc' quits.
+	 * Do it using vetors and textured quads.
+	 */
 
-    /*
-     * Swap the buffers. This this tells the driver to
-     * render the next frame from the contents of the
-     * back-buffer, and to set all rendering operations
-     * to occur on what was the front-buffer.
-     *
-     * Double buffering prevents nasty visual tearing
-     * from the application drawing on areas of the
-     * screen that are being updated at the same time.
-     */
-    SDL_GL_SwapBuffers( );
+	/*
+	 * Swap the buffers. This this tells the driver to
+	 * render the next frame from the contents of the
+	 * back-buffer, and to set all rendering operations
+	 * to occur on what was the front-buffer.
+	 *
+	 * Double buffering prevents nasty visual tearing
+	 * from the application drawing on areas of the
+	 * screen that are being updated at the same time.
+	 */
+	SDL_GL_SwapBuffers( );
 }
 
 static void setup_opengl( int width, int height )
 {
-    float ratio = (float) width / (float) height;
+	float ratio = (float) width / (float) height;
 
-    /* Our shading model--Gouraud (smooth). */
-    glShadeModel( GL_SMOOTH );
+	/* Our shading model--Gouraud (smooth). */
+	glShadeModel( GL_SMOOTH );
 
-    /* Culling. */
-    glCullFace( GL_BACK );
-    glFrontFace( GL_CCW );
-    glEnable( GL_CULL_FACE );
+	/* Culling. */
+	glCullFace( GL_BACK );
+	glFrontFace( GL_CCW );
+	glEnable( GL_CULL_FACE );
 
-    /* Set the clear color. */
-    glClearColor( 0, 0, 0, 0 );
+	/* Set the clear color. */
+	glClearColor( 0, 0, 0, 0 );
 
-    /* Setup our viewport. */
-    glViewport( 0, 0, width, height );
+	/* Setup our viewport. */
+	glViewport(0, 0, width, height);
 
-    /*
-     * Change to the projection matrix and set
-     * our viewing volume.
-     */
-    glMatrixMode( GL_PROJECTION );
-    glLoadIdentity( );
-    /*
-     * EXERCISE:
-     * Replace this with a call to glFrustum.
-     */
-    gluPerspective( 60.0, ratio, 1.0, 1024.0 );
+	/*
+	 * Change to the projection matrix and set
+	 * our viewing volume.
+	 */
+	glMatrixMode(GL_PROJECTION);
+	glLoadIdentity();
+	/*
+	 * EXERCISE:
+	 * Replace this with a call to glFrustum.
+	 */
+	// gluPerspective( 60.0, ratio, 1.0, 1024.0 );
+	// gluPerspective( 120, 4.0f / 3.0f, .00001, 100);
+	gluPerspective( 120, ratio, .00001, 100);
+	glMatrixMode(GL_MODELVIEW);
 }
 
 // Main Entry point:
@@ -292,9 +317,8 @@ int main(int argc, char* argv[]) {
     /* First, initialize SDL's video subsystem. */
     if( SDL_Init( SDL_INIT_VIDEO ) < 0 ) {
         /* Failed, exit. */
-        fprintf( stderr, "Video initialization failed: %s\n",
-             SDL_GetError( ) );
-        quit_tutorial( 1 );
+        fprintf( stderr, "Video initialization failed: %s\n", SDL_GetError() );
+        quit_tutorial(1);
     }
 
     /* Let's get some video information. */
@@ -304,7 +328,7 @@ int main(int argc, char* argv[]) {
         /* This should probably never happen. */
         fprintf( stderr, "Video query failed: %s\n",
              SDL_GetError( ) );
-        quit_tutorial( 1 );
+        quit_tutorial(1);
     }
 
     /*
@@ -316,8 +340,13 @@ int main(int argc, char* argv[]) {
      * safe. Under Win32, ChangeDisplaySettings
      * can change the bpp.
      */
+    // Just to test at a smaller size:
     width = 640;
     height = 480;
+
+    // Macbook Pro Retina 15" is: 2880 × 1800
+    // width = 2880;
+    // height = 1800;
     bpp = info->vfmt->BitsPerPixel;
 
     // Set up some OpenGL Color sizes:
@@ -340,11 +369,17 @@ int main(int argc, char* argv[]) {
 	SDL_GL_SetAttribute( SDL_GL_RED_SIZE, 5 );
     SDL_GL_SetAttribute( SDL_GL_GREEN_SIZE, 5 );
     SDL_GL_SetAttribute( SDL_GL_BLUE_SIZE, 5 );
-    SDL_GL_SetAttribute( SDL_GL_DEPTH_SIZE, 16 );
+
+	#ifdef __APPLE__
+		SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE,      32);
+	#else
+		SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE,      16);
+	#endif
+
     SDL_GL_SetAttribute( SDL_GL_DOUBLEBUFFER, 1 );
 
-    // Set the video mode:
-	if (SDL_SetVideoMode(width, height, bpp, SDL_OPENGL) == 0) {
+    // Set the video mode: | SDL_FULLSCREEN
+	if (SDL_SetVideoMode(width, height, bpp, SDL_OPENGL ) == 0) {
 		cout << "Could not initialize SDL: " << SDL_GetError() << endl;
 		quit_tutorial( 1 );
 	}
