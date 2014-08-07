@@ -12,7 +12,11 @@
     #define glXGetProcAddress(x) (*glXGetProcAddressARB)((const GLubyte*)x)
 #endif
 
-#include <iostream>
+#include <iostream> // This is true C++ STD library... but stdio is easier to use.
+#include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
+
 #include <math.h>
 #include <time.h>
 #include <unistd.h>
@@ -105,6 +109,111 @@ static void process_events( void )
     }
 
 }
+
+// my shit version:
+// char * textFileRead(char * filename) {
+// 	char *text = NULL;
+// 	return text;
+// }
+
+// Someone elses working version (in C)
+char *textFileRead(char *fn)
+{
+	FILE *fp;
+	char *content = NULL;
+
+	int count=0;
+
+	if (fn != NULL) {
+		fp = fopen(fn,"rt");
+
+		if (fp != NULL) {
+      
+      fseek(fp, 0, SEEK_END);
+      count = ftell(fp);
+      rewind(fp);
+
+			if (count > 0) {
+				content = (char *)malloc(sizeof(char) * (count+1));
+				count = fread(content,sizeof(char),count,fp);
+				content[count] = '\0';
+			}
+			fclose(fp);
+		}
+	}
+	
+	if (content == NULL)
+	   {
+	   fprintf(stderr, "ERROR: could not load in file %s\n", fn);
+	   exit(1);
+	   }
+	return content;
+}
+
+void printShaderLog(GLuint toPrint) {
+	cout << toPrint << endl;
+}
+
+void printProgramLog(GLuint toPrint) {
+	cout << toPrint << endl;
+}
+
+GLuint setShaders(char * vert, char * frag, char * geom) {
+	GLuint v,f, g, pro;
+	char *vs, *fs, *gs;
+
+	v = glCreateShader(GL_VERTEX_SHADER);
+	f = glCreateShader(GL_FRAGMENT_SHADER);
+	g = glCreateShader(GL_GEOMETRY_SHADER_EXT);
+
+	vs = textFileRead(vert);
+	fs = textFileRead(frag);
+	gs = textFileRead(geom);
+
+	const char * vv = vs;
+	const char * ff = fs;
+	const char * gg = gs;
+
+	glShaderSource(v, 1, &vv, NULL);
+	glShaderSource(f, 1, &ff, NULL);
+	glShaderSource(g, 1, &gg, NULL);
+
+	free(vs); free(fs); free(gs);
+
+	glCompileShader(v);
+	glCompileShader(f);
+	glCompileShader(g);
+
+	//fprintf(stderr, "vertex\n");
+	printShaderLog(v);
+
+	//fprintf(stderr, "fragment\n");
+	printShaderLog(f);
+
+	//fprintf(stderr, "geometry\n");
+	printShaderLog(g);
+
+	pro = glCreateProgram();
+	glAttachShader(pro,v);
+	glAttachShader(pro,f);
+	glAttachShader(pro,g);
+
+	// geometry shader details
+	// geometry shaders are different in that you have to specify details about their input and output
+	// input: GL_POINTS, GL_LINES, GL_LINES_ADJACENCY_EXT, GL_TRIANGLES, GL_TRIANGLES_ADJACENCY_EXT
+	// output: GL_POINTS, GL_LINE_STRIP, GL_TRIANGLE_STRIP 
+
+	glProgramParameteriEXT(pro,GL_GEOMETRY_INPUT_TYPE_EXT,GL_LINES);
+	glProgramParameteriEXT(pro,GL_GEOMETRY_OUTPUT_TYPE_EXT,GL_LINE_STRIP);
+	int temp;
+	glGetIntegerv(GL_MAX_GEOMETRY_OUTPUT_VERTICES_EXT,&temp);
+	glProgramParameteriEXT(pro,GL_GEOMETRY_VERTICES_OUT_EXT,temp);
+
+	glLinkProgram(pro);
+	printProgramLog(pro);
+
+	return(pro);
+ }
 
 static void draw_screen( void )
 {
